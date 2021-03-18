@@ -5,15 +5,15 @@ import math
 class GameBoard:
     def __init__(self,layout):
         self.walls = []
-        for row in range(10):
+        for row in range(len(layout)):
             self.walls.append([])
-            for col in range(10):
+            for col in range(len(layout[0])):
                 self.walls[row].append(None)
                 if layout[row][col] != 0:
-                    if layout[row][col] == 2:
-                        self.ball = Ball((32*col) - 160 + 8,(32*row) - 160 + 8,self)
+                    if layout[row][col] == 6:
+                        self.ball = Ball((16*col) - 160 + 8,(16*row) - 160 + 8,self)
                     else:
-                        self.walls[row][col] = Wall((32*col) - 160,(32*row) - 160,self)
+                        self.walls[row][col] = Wall((16*col) - 160,(16*row) - 160, layout[row][col], self)
 
 
         self.rot_x = 0
@@ -29,6 +29,7 @@ class GameBoard:
     def collideWall(self,x,y):
         xGrid = math.floor(x/32 + 5)
         yGrid = math.floor(y/32 + 5)
+        print(xGrid, yGrid)
         biggest = max(xGrid,yGrid)
         smallest = min(xGrid,yGrid)
         if biggest > 9 or smallest < 0:
@@ -79,12 +80,13 @@ class GameBoard:
                     wall.draw()
 
 class Wall:
-    def __init__(self,x,y,parent):
+    def __init__(self,x,y,type,parent):
         self.parent = parent
         self.x = x
         self.y = y
         self.z = 0
-    
+        self.type = type-1
+
     def update(self):
         #first translate to position on board, then rotate with the board
         translation = pyrr.matrix44.create_from_translation(pyrr.Vector3([self.x,self.y,self.z]))
@@ -92,9 +94,9 @@ class Wall:
     
     def draw(self):
         glUniformMatrix4fv(MODEL_LOC,1,GL_FALSE,self.model)
-        glBindVertexArray(WALL_MODEL.getVAO())
+        glBindVertexArray(WALL_MODELS[self.type].getVAO())
         glBindTexture(GL_TEXTURE_2D,WALL.getTexture())
-        glDrawArrays(GL_TRIANGLES,0,WALL_MODEL.getVertexCount())
+        glDrawArrays(GL_TRIANGLES,0,WALL_MODELS[self.type].getVertexCount())
 
 class Ball:
     def __init__(self,x,y,parent):

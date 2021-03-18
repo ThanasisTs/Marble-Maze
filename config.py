@@ -1,6 +1,7 @@
 import pygame as pg
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram,compileShader
+from OpenGL.GLU import *
 import numpy as np
 import pyrr
 import pywavefront as pwf
@@ -8,7 +9,8 @@ from assets import *
 
 pg.init()
 
-pg.display.set_mode((600,600),pg.OPENGL|pg.DOUBLEBUF)
+display = (600, 600)
+pg.display.set_mode(display,pg.OPENGL|pg.DOUBLEBUF)
 clock = pg.time.Clock()
 
 glClearColor(0,0.0,0.0,1)
@@ -34,8 +36,16 @@ glEnable(GL_CULL_FACE)
 
 ########################MODELS######################################
 BOARD_MODEL = ObjModel("models/board.obj")
-WALL_MODEL = ObjModel("models/wall.obj")
+# WALL_MODEL = ObjModel("models/wall_2.obj")
 BALL_MODEL = ObjModel("models/ball.obj")
+# WALL_HALF_MODEL_1 = ObjModel("models/wall_half_1.obj")
+# WALL_HALF_MODEL_2 = ObjModel("models/wall_half_2.obj")
+# WALL_HALF_MODEL_2 = ObjModel("models/wall_half_2.obj")
+# WALL_HALF_MODEL_2 = ObjModel("models/wall_half_2.obj")
+
+WALL_MODELS = [ObjModel("models/wall_2.obj"), ObjModel("models/wall_half_1.obj"), \
+				ObjModel("models/wall_half_2.obj"), ObjModel("models/wall_half_corner_1.obj"), \
+				ObjModel("models/wall_half_corner_2.obj")]
 ########################TEXTURES####################################
 BOARD = Texture("textures/board.jpg")
 WALL = Texture("textures/wall.jpg")
@@ -43,12 +53,13 @@ BALL = Texture("textures/glass.png")
 ####################################################################
 
 #(field of view, aspect ratio,near,far)
-cameraPos = pyrr.Vector3([0,-450,300])
-up = pyrr.Vector3([0.0,0.0,1.0]) 
+
+cameraPos = pyrr.Vector3([0,0,600])
+up = pyrr.Vector3([0.0,1.0,0.0]) 
 cameraRight = pyrr.vector.normalise(pyrr.vector3.cross(up, cameraPos))
 cameraUp = pyrr.vector3.cross(cameraPos, cameraRight)
 viewMatrix = pyrr.matrix44.create_look_at(cameraPos, pyrr.Vector3([0,0,0]), cameraUp)
-projection = pyrr.matrix44.create_perspective_projection_matrix(45,600/600,320,720)
+projection = pyrr.matrix44.create_perspective_projection_matrix(45,display[0]/display[1],320,1500)
 glUniformMatrix4fv(PROJ_LOC,1,GL_FALSE,projection)
 glUniformMatrix4fv(VIEW_LOC,1,GL_FALSE,viewMatrix)
 
