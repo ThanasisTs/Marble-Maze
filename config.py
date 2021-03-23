@@ -10,7 +10,7 @@ from assets import *
 pg.init()
 
 display = (600, 600)
-pg.display.set_mode(display,pg.OPENGL|pg.DOUBLEBUF)
+screen = pg.display.set_mode(display,pg.OPENGL|pg.DOUBLEBUF)
 clock = pg.time.Clock()
 
 glClearColor(0,0.0,0.0,1)
@@ -36,16 +36,11 @@ glEnable(GL_CULL_FACE)
 
 ########################MODELS######################################
 BOARD_MODEL = ObjModel("models/board.obj")
-# WALL_MODEL = ObjModel("models/wall_2.obj")
 BALL_MODEL = ObjModel("models/ball.obj")
-# WALL_HALF_MODEL_1 = ObjModel("models/wall_half_1.obj")
-# WALL_HALF_MODEL_2 = ObjModel("models/wall_half_2.obj")
-# WALL_HALF_MODEL_2 = ObjModel("models/wall_half_2.obj")
-# WALL_HALF_MODEL_2 = ObjModel("models/wall_half_2.obj")
+WALL_MODELS = [ObjModel("models/wall.obj"), ObjModel("models/wall_half_1_big.obj"),
+				ObjModel("models/wall_half_2_big.obj"), ObjModel("models/wall_half_corner_1_big.obj"),
+				ObjModel("models/wall_half_corner_2_big.obj")]
 
-WALL_MODELS = [ObjModel("models/wall_2.obj"), ObjModel("models/wall_half_1.obj"), \
-				ObjModel("models/wall_half_2.obj"), ObjModel("models/wall_half_corner_1.obj"), \
-				ObjModel("models/wall_half_corner_2.obj")]
 ########################TEXTURES####################################
 BOARD = Texture("textures/board.jpg")
 WALL = Texture("textures/wall.jpg")
