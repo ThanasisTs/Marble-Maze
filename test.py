@@ -1,91 +1,112 @@
 import numpy as np
 from scipy.spatial import distance
+import time
 import pygame
 
+def draw():
+    print(xBall, yBall)
+    if wait:
+        
+    stuck = False
+    screen.fill((0, 0, 0))
+    screen.blit(text, textRect)
+    pygame.draw.circle(screen, (255, 0, 0), (xBall, yBall), radius)
+    pygame.draw.line(screen, (0, 0, 255), (xObs, yObs), (xFinal, yFinal))
+    pygame.draw.line(screen, (0, 255, 0), (xObs, yObs), (xObs+500, yObs))
+    pygame.draw.line(screen, (255, 0, 255), (xObs, yObs), (xCol, yCol))
+    pygame.draw.line(screen, (0, 255, 255), (xObs, yObs), (xBall, yBall))
 
-xObs, yObs = 100, 800
-xFinal, yFinal = 800, 100
-xBall, yBall = 700, 700
+xObs, yObs = 200, 200
+xFinal, yFinal = 700, 700
+xBall, yBall = 450, 160
 radius = 100
 
 pygame.init()
 screen = pygame.display.set_mode((1000, 1000))
 running = True
+stuck = False
+yVel = 0.5
+xVel = 0
 
+pygame.display.set_caption('Test')
+
+font = pygame.font.Font('freesansbold.ttf', 32)
+
+text = font.render('Test', True, (0, 255, 0), (0, 0, 255))
+
+textRect = text.get_rect()
+
+textRect.center = (800, 800)
+
+wait = True
 while running:
-    for event in pygame.event.get():
-        if event.type==pygame.QUIT:
-            running = False
-        pygame.key.set_repeat(10, 10)
+    # for event in pygame.event.get():
+    #     if event.type==pygame.QUIT:
+    #         running = False
+    #     pygame.key.set_repeat(10, 10)
 
-        if event.type == pygame.KEYDOWN:
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_UP]:
-                yBall -= 2
-            if keys[pygame.K_DOWN]:
-                yBall += 2
-            if keys[pygame.K_RIGHT]:
-                xBall += 2
-            if keys[pygame.K_LEFT]:
-                xBall -= 2
-            if keys[pygame.K_UP] and keys[pygame.K_RIGHT]:
-                xBall += 2
-                yBall -= 2
-            if keys[pygame.K_UP] and keys[pygame.K_LEFT]:
-                xBall -= 2
-                yBall -= 2
-            if keys[pygame.K_DOWN] and keys[pygame.K_RIGHT]:
-                xBall += 2
-                yBall += 2
-            if keys[pygame.K_DOWN] and keys[pygame.K_LEFT]:
-                xBall -= 2
-                yBall += 2
+    #     if event.type == pygame.KEYDOWN:
+    #         keys = pygame.key.get_pressed()
+    #         if keys[pygame.K_UP]:
+    #             yBall -= 2
+    #         if keys[pygame.K_DOWN]:
+    #             yBall += 2
+    #         if keys[pygame.K_RIGHT]:
+    #             xBall += 2
+    #         if keys[pygame.K_LEFT]:
+    #             xBall -= 2
+    #         if keys[pygame.K_UP] and keys[pygame.K_RIGHT]:
+    #             xBall += 2
+    #             yBall -= 2
+    #         if keys[pygame.K_UP] and keys[pygame.K_LEFT]:
+    #             xBall -= 2
+    #             yBall -= 2
+    #         if keys[pygame.K_DOWN] and keys[pygame.K_RIGHT]:
+    #             xBall += 2
+    #             yBall += 2
+    #         if keys[pygame.K_DOWN] and keys[pygame.K_LEFT]:
+    #             xBall -= 2
+    #             yBall += 2
 
-
+    yBall += yVel
+    xBall += xVel
     dis = distance.euclidean([xObs, yObs], [xBall, yBall])
-    theta = min(225*np.pi/180, np.pi+np.arccos((yObs - yBall)/dis))
-    print(theta*180/np.pi)
-    print((np.pi+np.arccos((yObs - yBall)/dis))*180/np.pi)
-    # theta = 225*np.pi/180
-    xCol, yCol = xBall + 100*np.cos(theta), yBall + 100*np.sin(theta)
-    # print((yCol-yObs)/(xCol-xObs))
-    if (yCol-yObs)/(xCol-xObs) > -1:    
-        screen.fill((0, 0, 0))
-        pygame.draw.circle(screen, (255, 0, 0), (xBall, yBall), radius)
-        pygame.draw.line(screen, (0, 0, 255), (xObs, yObs), (xFinal, yFinal))
-        pygame.draw.line(screen, (0, 255, 0), (xObs, yObs), (xBall, yBall))
-        pygame.draw.line(screen, (0, 255, 0), (xObs, yObs), (xCol, yCol))
+    theta = 135*np.pi/180
+    if not stuck:
+        xCol, yCol = xBall + 100*np.cos(theta), yBall + 100*np.sin(theta)
+    else:
+        xBallNext, yBallNext = xBall + 100*np.cos(theta), yBall + 100*np.sin(theta)
+        thetaCol = np.arctan((yBallNext-yObs)/(xBallNext-xObs))*180/np.pi
+        if xBallNext-xObs < 0:
+            thetaCol += 180
+        if thetaCol < 45:
+            xCol, yCol = xBallNext, yBallNext            
+        else:
+            # xBall, yBall = xBallStuck, yBallStuck
+            pass
+    thetaCol = np.arctan((yCol-yObs)/(xCol-xObs))*180/np.pi
+    if xCol-xObs < 0:
+        thetaCol += 180
 
+
+    # if thetaCol <= -90:
+    #     if dis <= radius:
+    #         print("Time: {}. COLLISION".format(time.time()))
+    #         stuck = True
+    #         xBallStuck, yBallStuck = xBall, yBall
+    #     else:
+    #         draw()
+    if thetaCol < 45:
+        xVel, yVel = 0, 0.5
+    else:
+        stuck = True
+        xBallStuck, yBallStuck = xBall, yBall
+        tmpVel = 0.5*np.cos(np.pi/4)
+        xVel, yVel = tmpVel * np.cos(np.pi/4), tmpVel * np.cos(np.pi/4)
+        xBall += xVel
+        yBall += yVel
+    
+    draw()
     pygame.display.flip()
-
-# def callback_human(msg):
-#     global screen, sc, xpos_r, ypos_r, xpos_b, ypos_b, key_lock, count1, initx_human, inity_human
-#     if count1 == 0:
-#         initx_human = int(round(sc*(msg.point.x+0.5)))
-#         inity_human = int(round(sc*(-msg.point.y+0.5)))
-#     count1 += 1
-#     xpos_b = int(round(sc*(msg.point.x+0.5))) - initx_human + 500
-#     ypos_b = int(round(sc*(-msg.point.y+0.5))) - inity_human + 500
-#     # screen.fill((0, 0, 0))
-#     # pygame.draw.circle(screen, (255, 0, 0), (xpos_r, ypos_r), radius)
-#     # pygame.draw.circle(screen, (0, 0, 255), (xpos_b, ypos_b), radius)
-#     # pygame.display.flip()
-
-
-# def callback_robot(msg):
-#     global screen, sc, xpos_r, ypos_r, xpos_b, ypos_b, key_lock, count2, initx_robot, inity_robot
-#     if count2 == 0:
-#         initx_robot = int(round(sc*(msg.pose.position.x+0.5)))
-#         inity_robot = int(round(sc*(-msg.pose.position.y+0.5)))
-#     count2 += 1
-#     xpos_r = int(round(sc*(msg.pose.position.x+0.5))) - initx_robot + 500
-#     ypos_r = int(round(sc*(-msg.pose.position.y+0.5))) - inity_robot + 500
-#     # xpos_r = int(round(sc*(msg.point.x+0.5)))
-#     # ypos_r = int(round(sc*(-msg.point.y+0.5)))
-
-#     # screen.fill((0, 0, 0))
-#     pygame.draw.circle(screen, (0, 0, 255), (xpos_b, ypos_b), radius)
-#     pygame.draw.circle(screen, (255, 0, 0), (xpos_r, ypos_r), radius)
-#     pygame.display.flip()
-
+    time.sleep(0.01)
 
