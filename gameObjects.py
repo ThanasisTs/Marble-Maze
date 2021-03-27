@@ -49,8 +49,8 @@ class GameBoard:
         # if the grid has an object
         if self.walls[yGrid][xGrid] != None:
             # square object
-            if self.walls[yGrid][xGrid] == 1:
-                return 0, 0, True
+            # if self.walls[yGrid][xGrid] == 1:
+            #     return 0, 0, True
             
             # change reference point to be down left pixel of the grid
             xObs, yObs = 0, 0
@@ -85,6 +85,7 @@ class GameBoard:
                 # collision angle
                 theta = 45*np.pi/180
                 xCol, yCol = xBall + 8*np.cos(theta), yBall + 8*np.sin(theta)
+                thetaCol = np.arctan((yCol-yObs)/(xCol-32-xObs))*180/np.pi
                 if thetaCol > 0:
                     return velx, vely, False
                 else:
@@ -100,6 +101,7 @@ class GameBoard:
                         return velx, vely, True
                 else:
                     return velx, vely, False
+            return 0, 0, True
         return velx, vely, False
     
     def update(self):

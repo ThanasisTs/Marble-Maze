@@ -48,18 +48,18 @@ glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA)
 glEnable(GL_CULL_FACE)
 
 ########################MODELS######################################
-BOARD_MODEL = ObjModel("/home/thanasis/marble_maze/maze3D/models/board.obj")
+BOARD_MODEL = ObjModel("models/board.obj")
 BALL_MODEL = ObjModel("models/ball.obj")
 WALL_MODELS = [ObjModel("models/wall.obj"), ObjModel("models/wall_half_1_big.obj"),
 				ObjModel("models/wall_half_2_big.obj"), ObjModel("models/wall_half_corner_1_big.obj"),
 				ObjModel("models/wall_half_corner_2_big.obj")]
-HOLE_MODEL = ObjModel("/home/thanasis/marble_maze/maze3D/models/hole.obj")
+HOLE_MODEL = ObjModel("models/hole.obj")
 TEXT_MODEL = ObjModel("models/text.obj")
 ########################TEXTURES####################################
-BOARD = Texture("/home/thanasis/marble_maze/maze3D/textures/board_white.png")
-WALL = Texture("/home/thanasis/marble_maze/maze3D/textures/wall_simple.jpg")
-BALL = Texture("/home/thanasis/marble_maze/maze3D/textures/glass.png")
-HOLE = Texture("/home/thanasis/marble_maze/maze3D/textures/green.png")
+BOARD = Texture("textures/board_white.png")
+WALL = Texture("textures/wall_simple.jpg")
+BALL = Texture("textures/glass.png")
+HOLE = Texture("textures/green.png")
 TEXT = [Texture("textures/5_secs.png"), Texture("textures/4secs.png"), Texture("textures/3secs.png"), 
 		Texture("textures/2secs.png"), Texture("textures/1secs.png"), Texture("textures/play.png")]
 ####################################################################
