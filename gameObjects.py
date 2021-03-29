@@ -25,6 +25,7 @@ class GameBoard:
         self.rot_y = 0
         self.max_x_rotation = 0.5
         self.max_y_rotation = 0.5
+        self.slide = False
 
         self.keyMap = {1:(1,0),
                         2:(-1,0),
@@ -71,11 +72,17 @@ class GameBoard:
                 # if ball hits the triangle object, then collision
                 # if ball touches the triangle object, then slide
                 if thetaCol > 135:
-                    if vely <= 0:
-                        tmpVel = vely*np.sin(np.pi/4)
-                        return 2 * tmpVel * np.sin(-np.pi/4), 2 * tmpVel * np.cos(-np.pi/4), False
+                    if velx > -0.01 and vely > -0.01:
+                        self.slide = True
+                    if self.slide:
+                        if vely <= 0:
+                            tmpVel = vely*np.sin(np.pi/4)
+                            return 2 * tmpVel * np.sin(-np.pi/4), 2 * tmpVel * np.cos(-np.pi/4), False
+                        elif vely > 0:
+                            return velx, vely, False 
                     else:
-                        return velx, vely, True
+                        self.slide = False
+                        return 0, 0, True
                 else:
                     return velx, vely, False
             
@@ -94,13 +101,22 @@ class GameBoard:
                 # if ball hits the triangle object, then collision
                 # if ball touches the triangle object, then slide
                 if thetaCol < 135:
-                    if vely >= 0:
-                        tmpVel = vely*np.cos(np.pi/4)
-                        return 2 * tmpVel * np.cos(3*np.pi/4), 2 * tmpVel * np.sin(3*np.pi/4), False
+                    if velx < 0.01 and vely < 0.01:
+                        self.slide = True
+
+                    if self.slide:
+                        if vely >= 0:
+                            tmpVel = vely*np.cos(np.pi/4)
+                            return 2 * tmpVel * np.cos(3*np.pi/4), 2 * tmpVel * np.sin(3*np.pi/4), False
+                        elif vely < 0:
+                            return velx, vely, False
                     else:
-                        return velx, vely, True
+                        self.slide =  False
+                        return 0, 0, True
                 else:
                     return velx, vely, False
+            else:
+                self.slide = False
             return 0, 0, True
         return velx, vely, False
     
@@ -187,6 +203,9 @@ class Ball:
         self.velocity[0] += 0.01*acceleration[0]
         self.velocity[1] += 0.01*acceleration[1]
 
+        cmd_vel_x = self.velocity[0]
+        cmd_vel_y = self.velocity[1]
+
         testX = self.x + self.velocity[0] + 8*np.sign(self.velocity[0])
         testY = self.y + self.velocity[1] + 8*np.sign(self.velocity[1])
 
@@ -194,14 +213,14 @@ class Ball:
         nextY = self.y + self.velocity[1]
 
         #check x direction. if collision then bounch, else move typically
-        resultsColX = self.parent.collideWall(testX, self.y, nextX, nextY, self.velocity[0], self.velocity[1])
+        resultsColX = self.parent.collideWall(testX, self.y, nextX, nextY, cmd_vel_x, cmd_vel_y)
         if resultsColX[2]:
             self.velocity[0] *= -0.25
         else:
             self.velocity[0], self.velocity[1] = resultsColX[0], resultsColX[1]
         
         #check y direction
-        resultsColY = self.parent.collideWall(self.x, testY, nextX, nextY, self.velocity[0], self.velocity[1])
+        resultsColY = self.parent.collideWall(self.x, testY, nextX, nextY, cmd_vel_x, cmd_vel_y)
         if resultsColY[2]:
             self.velocity[1] *= -0.25
         else:
