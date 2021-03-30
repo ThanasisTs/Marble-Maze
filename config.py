@@ -49,7 +49,7 @@ glEnable(GL_CULL_FACE)
 
 ########################MODELS######################################
 BOARD_MODEL = ObjModel("models/board.obj")
-BALL_MODEL = ObjModel("models/ball.obj")
+BALL_MODEL = ObjModel("/home/ttsitos/Desktop/marble_maze/maze3D/models/ball.obj")
 WALL_MODELS = [ObjModel("models/wall.obj"), ObjModel("models/wall_half_1_big.obj"),
 				ObjModel("models/wall_half_2_big.obj"), ObjModel("models/wall_half_corner_1_big.obj"),
 				ObjModel("models/wall_half_corner_2_big.obj")]

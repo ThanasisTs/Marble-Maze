@@ -72,9 +72,12 @@ running = True
 while running:
 
     for event in pg.event.get():
+
         if event.type==pg.QUIT:
             running = False
         if event.type==pg.KEYDOWN:
+            if event.key == pg.K_SPACE:
+                input("Press Enter to continue: ")
             if event.key in keys:
                 currentKey += keys[event.key]
         if event.type==pg.KEYUP:

@@ -3,6 +3,7 @@ from assets import *
 import math
 import numpy as np
 from scipy.spatial import distance
+import time
 
 class GameBoard:
     def __init__(self,layout):
@@ -25,6 +26,7 @@ class GameBoard:
         self.rot_y = 0
         self.max_x_rotation = 0.5
         self.max_y_rotation = 0.5
+        self.count_slide = 0
         self.slide = False
 
         self.keyMap = {1:(1,0),
@@ -36,7 +38,108 @@ class GameBoard:
         return (self.ball.x, self.ball.y)
 
 
-    def collideWall(self, test, current, x, y, velx, vely):
+    def collideWall2(self, checkX, checkY, x, y, velx, vely, thetaX, thetaY):
+        # find the grid that the ball tends to enter
+        # grid_directionX stores the coordinates of the ball in the x axis
+        # grid_directionY stores the coordinates of the ball in the y axis
+        count = 0
+        grid_directionX = [math.floor(checkX/32 + 5), math.floor(y/32 + 5)]
+        grid_directionY = [math.floor(x/32 + 5), math.floor(checkY/32 + 5)]
+        check_collision = [grid_directionX, grid_directionY]
+        for direction in check_collision:
+
+            biggest = max(direction[0],direction[1])
+            smallest = min(direction[0],direction[1])
+            # print(biggest, smallest)
+            # if the ball tends to get out of the board limits, then collision
+            if biggest > 13 or smallest < 0:
+                # print(count)
+                return 0, 0, True, count, True
+
+            # if the grid has an object
+            if self.walls[direction[1]][direction[0]] != None:
+                
+                # square object
+                if self.layout[direction[1]][direction[0]] == 1:
+                    return 0, 0, True, count, True
+
+                # change reference point to be down left pixel of the grid
+                xObs, yObs = 0, 0
+                xBall, yBall = x-32*direction[0] + 160, y-32*direction[1] + 160
+
+                # left triangle object 
+                if self.layout[direction[1]][direction[0]] == 4:
+                    
+                    # collision angle
+                    theta = 225*np.pi/180
+                    xCol, yCol = xBall + 8*np.cos(theta), yBall + 8*np.sin(theta)
+                    thetaCol = np.arctan((yCol-yObs)/(xCol-32-xObs))*180/np.pi
+                    if thetaCol > 0:
+                        return velx, vely, False, None, False
+                    else:
+                        thetaCol += 180
+                    
+                    # if ball hits the triangle object, then collision
+                    # if ball touches the triangle object, then slide
+                    # print(thetaCol)
+                    if thetaCol > 134:
+                        self.count_slide += 1
+                        if self.count_slide == 10:
+                            self.slide = True
+                            # print(thetaCol)
+                            print('I touch the surface')
+                            xDes, yDes = xBall, yBall
+                        elif not self.slide:
+                            print('gonna bounch')
+                            return 0, 0, True, None, False
+                        if self.slide:
+                            print(thetaX, thetaY)
+                            print(thetaCol)
+                            if thetaY < 0 and thetaX > 0:
+                                if abs(thetaY) > abs(thetaX):
+                                    return 0.1, -0.1, False, None, False
+                                else:
+                                    return -0.1, 0.1, False, None, False
+                            else:
+                                return velx, vely, False, None, False                        
+                            # if thetaY < 0:
+                            #     if thetaX > 0:
+                            #         return 0.1, -0.1, False, None, False
+                            #     else:
+                            #         xCol, yCol = xBall + 8*np.cos(theta), yBall + 8*np.sin(theta)
+                            #         thetaCol = np.arctan((yCol-yObs)/(xCol-32-xObs))*180/np.pi
+                            #         if thetaCol > 0:
+                            #             return velx, vely, False, None, False
+                            #         else:
+                            #             thetaCol += 180
+                            #         if thetaCol < 134:
+                            #             return velx, vely, False, None, False
+                            #         else:
+                            #             return velx, 0, False, None, False
+                            # else:
+                            #     xCol, yCol = xBall + 8*np.cos(theta), yBall + 8*np.sin(theta)
+                            #     thetaCol = np.arctan((yCol-yObs)/(xCol-32-xObs))*180/np.pi
+                            #     if thetaCol > 0:
+                            #         return velx, vely, False, None, False
+                            #     else:
+                            #         thetaCol += 180
+                            #     if thetaCol < 134:
+                            #         return velx, vely, False, None, False
+                            #     else:
+                            #         return 0, vely, False, None, False
+                    else:
+                        return velx, vely, False, None, False
+                
+                # right triangle
+                # TODO
+
+            count += 1
+                
+        return velx, vely, False, None, True
+
+
+
+    def collideWall(self, test, current, x, y, velx, vely, thetaX, thetaY):
         # find the grid that the ball tends to enter
         xGrid = math.floor(test/32 + 5)
         yGrid = math.floor(current/32 + 5)
@@ -48,10 +151,15 @@ class GameBoard:
             return 0, 0, True
 
         # if the grid has an object
-        if self.walls[yGrid][xGrid] != None:
+        # if self.walls[yGrid][xGrid] == None:
+        #     print('ok')
+        #     self.count_slide = 0
+
+        elif self.walls[yGrid][xGrid] != None:
             # square object
-            # if self.walls[yGrid][xGrid] == 1:
-            #     return 0, 0, True
+            if self.walls[yGrid][xGrid] == 1:
+                self.count_slide = 0
+                return 0, 0, True
             
             # change reference point to be down left pixel of the grid
             xObs, yObs = 0, 0
@@ -71,20 +179,47 @@ class GameBoard:
                 
                 # if ball hits the triangle object, then collision
                 # if ball touches the triangle object, then slide
-                if thetaCol > 135:
-                    if velx > -0.01 and vely > -0.01:
+                if thetaCol > 134:
+                    self.count_slide += 1
+                    if self.count_slide > 5:
                         self.slide = True
-                    if self.slide:
-                        if vely <= 0:
-                            tmpVel = vely*np.sin(np.pi/4)
-                            return 2 * tmpVel * np.sin(-np.pi/4), 2 * tmpVel * np.cos(-np.pi/4), False
-                        elif vely > 0:
-                            return velx, vely, False 
+                        print('I touch the surface')
                     else:
-                        self.slide = False
+                        print('gonna bounch')
                         return 0, 0, True
-                else:
-                    return velx, vely, False
+                    if self.slide:
+                        print(thetaX, thetaY)
+
+                        if thetaY < 0:
+                            if thetaX < 0:
+                                xCol, yCol = xBall + 8*np.cos(theta), yBall + 8*np.sin(theta)
+                                thetaCol = np.arctan((yCol-yObs)/(xCol-32-xObs))*180/np.pi
+                                if thetaCol > 0:
+                                    return velx, vely, False
+                                else:
+                                    thetaCol += 180
+                                if thetaCol < 134:
+                                    return velx, vely, False 
+                            return 0.02, -0.02, False
+                        else:
+                            return 0, 0, True
+                #         if thetaY <= 0 and thetaX >= 0:
+                #             tmpVel = vely*np.sin(np.pi/4)
+                #             return 2 * tmpVel * np.sin(-np.pi/4), 2 * tmpVel * np.cos(-np.pi/4), False
+                #         elif thetaY <= 0 and thetaX < 0:
+                #             tmpVel = vely*np.sin(np.pi/4)
+                #             return velx + tmpVel * np.sin(-np.pi/4), 2 * tmpVel * np.cos(-np.pi/4), False
+                #         elif thetaY >= 0 and thetaX <= 0:
+                #             return velx, vely, False
+                #         else:
+                #             tmpVel = velx*np.sin(np.pi/4)
+                #             return 2 * tmpVel * np.sin(np.pi/4), vely + tmpVel * np.cos(-np.pi/4), False                            
+                #             # return velx, vely, False 
+                #     else:
+                #         self.slide = False
+                #         return 0, 0, True
+                # else:
+                #     return velx, vely, False
             
             # right triangle
             elif self.layout[yGrid][xGrid] == 5:
@@ -98,26 +233,36 @@ class GameBoard:
                 else:
                     thetaCol += 180
 
+
                 # if ball hits the triangle object, then collision
                 # if ball touches the triangle object, then slide
                 if thetaCol < 135:
-                    if velx < 0.01 and vely < 0.01:
+                    self.count_slide += 1
+                    if self.count_slide > 10:
                         self.slide = True
-
-                    if self.slide:
-                        if vely >= 0:
-                            tmpVel = vely*np.cos(np.pi/4)
-                            return 2 * tmpVel * np.cos(3*np.pi/4), 2 * tmpVel * np.sin(3*np.pi/4), False
-                        elif vely < 0:
-                            return velx, vely, False
                     else:
-                        self.slide =  False
                         return 0, 0, True
-                else:
-                    return velx, vely, False
-            else:
-                self.slide = False
-            return 0, 0, True
+                    print('I touch the surface')
+                    time.sleep(1000)
+
+
+        #             if velx < 0.01 and vely < 0.01:
+        #                 self.slide = True
+
+        #             if self.slide:
+        #                 if vely >= 0:
+        #                     tmpVel = vely*np.cos(np.pi/4)
+        #                     return 2 * tmpVel * np.cos(3*np.pi/4), 2 * tmpVel * np.sin(3*np.pi/4), False
+        #                 elif vely < 0:
+        #                     return velx, vely, False
+        #             else:
+        #                 self.slide =  False
+        #                 return 0, 0, True
+        #         else:
+        #             return velx, vely, False
+        #     else:
+        #         self.slide = False
+        #     return 0, 0, True
         return velx, vely, False
     
     def update(self):
@@ -206,26 +351,39 @@ class Ball:
         cmd_vel_x = self.velocity[0]
         cmd_vel_y = self.velocity[1]
 
-        testX = self.x + self.velocity[0] + 8*np.sign(self.velocity[0])
-        testY = self.y + self.velocity[1] + 8*np.sign(self.velocity[1])
+        check_collision_X = self.x + self.velocity[0] + 8*np.sign(self.velocity[0])
+        check_collision_Y = self.y + self.velocity[1] + 8*np.sign(self.velocity[1])
 
         nextX = self.x + self.velocity[0]
         nextY = self.y + self.velocity[1]
 
-        #check x direction. if collision then bounch, else move typically
-        resultsColX = self.parent.collideWall(testX, self.y, nextX, nextY, cmd_vel_x, cmd_vel_y)
-        if resultsColX[2]:
-            self.velocity[0] *= -0.25
+        velx, vely, collision, collisionAxis, collisionObs = self.parent.collideWall2(check_collision_X, check_collision_Y, nextX, nextY, cmd_vel_x, cmd_vel_y, self.parent.rot_y, self.parent.rot_x)
+        if collision:
+            if collisionAxis == 0:
+                self.velocity[0] *= -0.25
+                if not collisionObs:
+                    self.velocity[1] = 0
+            else:
+                if not collisionObs:
+                    self.velocity[0] = 0
+                self.velocity[1] *= -0.25
         else:
-            self.velocity[0], self.velocity[1] = resultsColX[0], resultsColX[1]
-        
-        #check y direction
-        resultsColY = self.parent.collideWall(self.x, testY, nextX, nextY, cmd_vel_x, cmd_vel_y)
-        if resultsColY[2]:
-            self.velocity[1] *= -0.25
-        else:
-            self.velocity[0], self.velocity[1] = resultsColY[0], resultsColY[1]
+            self.velocity = [velx, vely]
 
+        # #check x direction. if collision then bounch, else move typically
+        # resultsColX = self.parent.collideWall(testX, self.y, nextX, nextY, cmd_vel_x, cmd_vel_y, self.parent.rot_y, self.parent.rot_x)
+        # if resultsColX[2]:
+        #     self.velocity[0] *= -0.25
+        # else:
+        #     self.velocity[0], self.velocity[1] = resultsColX[0], resultsColX[1]
+        
+        # #check y direction
+        # resultsColY = self.parent.collideWall(self.x, testY, nextX, nextY, cmd_vel_x, cmd_vel_y, self.parent.rot_x, self.parent.rot_y)
+        # if resultsColY[2]:
+        #     self.velocity[1] *= -0.25
+        # elif not resultsColX[2]:
+        #     self.velocity[0], self.velocity[1] = resultsColY[0], resultsColY[1]
+        print(self.velocity[0], self.velocity[1])
         self.x += self.velocity[0]
         self.y += self.velocity[1]
     
