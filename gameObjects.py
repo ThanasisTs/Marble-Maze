@@ -83,7 +83,7 @@ class GameBoard:
         xGridCol4, yGridCol4 = math.floor(xCol4/32+5), math.floor(yCol4/32+5)
         xCol5, yCol5 = x + 8*np.cos(45*np.pi/180), y + 8*np.sin(45*np.pi/180)
         xGridCol5, yGridCol5 = math.floor(xCol5/32+5), math.floor(yCol5/32+5)
-
+        
         # left triangle object
         if self.layout[yGridCol4][xGridCol4] == 4:
             
@@ -111,7 +111,7 @@ class GameBoard:
             # if thetaCol is greater than 135 degrees, then the ball hit the triangle
             elif thetaCol > 135:
                 self.count_slide += 1
-                # if collision angle is greater than 135 degrees 10 consecutive times, 
+                # if collision angle is greater than 135 degrees 3 consecutive times, 
                 # then we assume that the ball touches the leaning surface. Otherwise, the ball
                 # will bounce 
                 if self.count_slide == 3:
@@ -119,10 +119,11 @@ class GameBoard:
                     print('I touch the surface')
                 elif not self.slide:
                     print('gonna bounch')
-                    return 0, 0, True
+                    if velx <= 0 and vely <= 0:
+                    	return 0.25*abs(vely), 0.25*abs(velx), False
+                    return 0.25*np.sign(velx)*abs(vely), 0.25*np.sign(vely)*abs(velx), False
                 if self.slide:
-                    print(thetaX, thetaY)
-                    if thetaY < 0 and thetaX > 0:
+                    if thetaY <= 0 and thetaX >= 0:
                         if abs(thetaY) > abs(thetaX):
                             if self.collideSquare(x+8, y):
                                 if thetaY <= 0:
@@ -140,21 +141,15 @@ class GameBoard:
                     else:
                         if thetaX < 0 and thetaY > 0:
                             return velx, vely, False
-                        else:
-                            if thetaX >= 0:
-                                if self.collideSquare(x+8, y):
-                                    if thetaY <= 0:
-                                        return 0, 0, True
-                                    else:
-                                        return velx, 0, False
-                                return -0.1*np.cos(thetaCol*np.pi/180), vely, False
-                            else:
-                                if self.collideSquare(x, y+8):
-                                    if thetaX >= 0:
-                                        return 0, 0, True
-                                    else:
-                                        return velx, 0, False
-                                return velx, -0.1*np.sin(thetaCol*np.pi/180), False
+                        else: 
+                            if thetaX >= 0: # if thetaX >=0 and thetaY >= 0
+                                if self.collideSquare(x, y+32):
+                                    return 0, 0, True
+                                return 0, vely, False
+                            else: # if thetaX <=0 and thetaY <= 0
+                                if self.collideSquare(x+32, y):
+                                    return 0, 0, True
+                                return velx, 0, False
         
         # right triangle
         elif self.layout[yGridCol5][xGridCol5] == 5:
@@ -163,8 +158,8 @@ class GameBoard:
             theta = 45*np.pi/180
             xCol, yCol = xBall + 8*np.cos(theta), yBall + 8*np.sin(theta)
             thetaCol = np.arctan((yCol-yObs)/(xCol-32-xObs))*180/np.pi
-            
-            if thetaCol < -50 or thetaCol > -25:
+            print(thetaCol)
+            if thetaCol < -50 or 0 > thetaCol > -10:
                 thetaCol = 134.5
             else:
                 thetaCol += 180
@@ -190,9 +185,10 @@ class GameBoard:
                     print('I touch the surface')
                 elif not self.slide:
                     print('gonna bounch')
-                    return 0, 0, True
+                    if velx >= 0 and vely >= 0:
+                    	return -0.25*vely, -0.25*velx, False
+                    return 0.25*np.sign(velx)*abs(vely), 0.25*np.sign(vely)*abs(velx), False
                 if self.slide:
-
                     if thetaY > 0 and thetaX < 0:
                         if abs(thetaY) > abs(thetaX):
                             if self.collideSquare(x, y-8):
@@ -200,32 +196,27 @@ class GameBoard:
                                     return velx, 0, True
                                 else:
                                     return 0, 0, False
-                            return 0.1*np.cos(thetaCol*np.pi/180), 0.1*np.sin(thetaCol*np.pi/180), False
+                            return 0.1, -0.1, False
                         else:
                             if self.collideSquare(x-8, y):
                                 if thetaY <= 0:
                                     return 0, vely, True
                                 else:
                                     return 0, 0, False
-                            return -0.1*np.cos(thetaCol*np.pi/180), -0.1*np.sin(thetaCol*np.pi/180), False
+                            return -0.1, 0.1, False
                     else:
                         if thetaX >= 0 and thetaY <= 0:
                             return velx, vely, False
                         else:
+                            print(thetaCol)
                             if thetaX < 0:
-                                if self.collideSquare(x, y-8):
-                                    if thetaX <= 0:
-                                        return velx, 0, True
-                                    else:
-                                        return 0, 0, False                                
-                                return 0.1*np.cos(thetaCol*np.pi/180), vely, False
+                                if self.collideSquare(x, y-32):
+                                    return 0, 0, True
+                                return velx, 0, False
                             else:
-                                if self.collideSquare(x-8, y):
-                                    if thetaY <= 0:
-                                        return 0, vely, True
-                                    else:
-                                        return 0, 0, False
-                                return velx, 0.1*np.sin(thetaCol*np.pi/180), False
+                                if self.collideSquare(x-32, y):
+                                    return 0, 0, True
+                                return 0, vely, False
         count += 1
         return velx, vely, False
 
@@ -336,6 +327,7 @@ class Ball:
 
         if not checkXCol and not checkYCol:
             velx, vely, collision = self.parent.collideTriangle(check_collision_X, check_collision_Y, nextX, nextY, cmd_vel_x, cmd_vel_y, self.parent.rot_y, self.parent.rot_x)
+            # print(velx, vely)
             if collision:
                 self.velocity[0] *= -0.25
                 self.velocity[1] *= -0.25
