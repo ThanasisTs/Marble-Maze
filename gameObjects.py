@@ -16,7 +16,6 @@ class GameBoard:
                 if layout[row][col] != 0:
                     if layout[row][col] == 2:
                         self.hole = Hole(32*col - 150, 32*row - 150, self)
-                        print(self.hole.x, self.hole.y)
                     elif layout[row][col] == 3:
                         self.ball = Ball((32*col) - 150, (32*row) -150, self)
                     else:
@@ -36,9 +35,6 @@ class GameBoard:
                         4:(0,1),5:(1,1),6:(-1,1),7:(0,1),
                         8:(0,-1),9:(1,-1),10:(-1,-1),11:(0,-1),13:(1,0),14:(-1,0)}
     
-    def getBallCoords(self):
-        return (self.ball.x, self.ball.y)
-
     def collideSquare(self, x, y):
         # if the ball hits a square obstacle, it will return True
         # and the collideTriangle will not be called
@@ -58,7 +54,6 @@ class GameBoard:
         # grid_directionX stores the coordinates of the ball in the x axis
         # grid_directionY stores the coordinates of the ball in the y axis
         
-        count = 0
         grid_directionX = [math.floor(checkX/32 + 5), math.floor(y/32 + 5)]
         grid_directionY = [math.floor(x/32 + 5), math.floor(checkY/32 + 5)]
 
@@ -98,20 +93,15 @@ class GameBoard:
             else:
                 thetaCol += 180
 
-            # if thetaCol is less than 133 degrees, reset the slide counter and the slide flag
+            # if thetaCol is less than 135 degrees, reset the slide counter and the slide flag
             # and return the commanded velocities
-            if thetaCol < 133:
+            if thetaCol < 135:
                 self.count_slide = 0
                 self.slide = False
                 self.step = 0
                 return velx, vely, False
-            # if thetaCol is between 133 and 135 degrees, decrease the slide counter and 
-            # return the commanded velocities
-            elif 133 <= thetaCol <= 135:
-                return velx, vely, False
             # if thetaCol is greater than 135 degrees, then the ball hit the triangle
-            elif thetaCol > 135:
-                self.count_slide += 1
+            elif thetaCol >= 135:
                 # if collision angle is greater than 135 degrees 3 consecutive times, 
                 # then we assume that the ball touches the leaning surface. Otherwise, the ball
                 # will bounce 
@@ -119,46 +109,35 @@ class GameBoard:
                     self.slide = True
                     print('I touch the surface')
                 elif not self.slide:
+                    self.count_slide += 1
                     print('gonna bounch')
                     if velx <= 0 and vely <= 0:
-                    	return 0.25*abs(vely), 0.25*abs(velx), False
+                        return 0.25*abs(vely), 0.25*abs(velx), False
                     return 0.25*np.sign(velx)*abs(vely), 0.25*np.sign(vely)*abs(velx), False
 
                 if self.slide:
+                    self.count_slide = 0
                     if accx <= 0 and accy <= 0:
                         if abs(accx) > abs(accy):
-                            if self.collideSquare(x, y+8):
-                            	self.slide_velx, self.slide_vely = 0, 0
-                            	return 0.1, 0, False
                             self.slide_velx -= 0.002*accy/accx
                             self.slide_vely += 0.002*accy/accx
                             return self.slide_velx, self.slide_vely, False
                         else:
-                            if self.collideSquare(x+8, y):
-                            	self.slide_velx, self.slide_vely = 0, 0
-                            	return 0, 0.1, False
                             self.slide_velx += 0.002*accx/accy
                             self.slide_vely -= 0.002*accx/accy
                             return self.slide_velx, self.slide_vely, False
                     else:
-                    	self.slide_velx, self.slide_vely = 0, 0
-                    	self.count_slide = False
-                    	self.slide = False
-                    	if accx > 0 and accy > 0:
-                    		return velx, vely, False
-                    	else: 
-                    		if accx <= 0: # if accx <=0 and accy >= 0
-                    			if self.collideSquare(x, y+32):
-                    				return 0, 0, True
-                    			return 0, vely, False
-                    		else: # if accx >=0 and accy <= 0
-                    			if self.collideSquare(x+32, y):
-                    				return 0, 0, True
-                    			return velx, 0, False
-        
+                        self.slide = False
+                        last_velx, last_vely = self.slide_velx, self.slide_vely
+                        self.slide_velx, self.slide_vely = 0, 0
+                        if accx > 0:
+                            return last_velx + accx, last_vely, False
+                        else:
+                            return last_velx, last_vely + accy, False
+
+
         # right triangle
         elif self.layout[yGridCol5][xGridCol5] == 5:
-            
             # collision angle
             theta = 45*np.pi/180
             xCol, yCol = xBall + 8*np.cos(theta), yBall + 8*np.sin(theta)
@@ -167,64 +146,45 @@ class GameBoard:
                 thetaCol = 134.5
             else:
                 thetaCol += 180
-
-            # if thetaCol is less than 133 degrees, reset the slide counter and the slide flag
+            
+            # if thetaCol is greater than 135 degrees, reset the slide counter and the slide flag
             # and return the commanded velocities
-            if thetaCol > 137:
+            if thetaCol > 135:
                 self.count_slide = 0
                 self.slide = False
                 return velx, vely, False
-            # if thetaCol is between 133 and 135 degrees, decrease the slide counter and 
-            # return the commanded velocities
-            elif 135 <= thetaCol <= 137:
-                return velx, vely, False
-            # if thetaCol is greater than 135 degrees, then the ball hit the triangle
-            elif thetaCol < 135:
-
+            # if thetaCol is less than 135 degrees, then the ball hit the triangle
+            elif thetaCol <= 135:
                 self.count_slide += 1
                 # if collision angle is greater than 135 degrees 10 consecutive times, 
-                # then we assume that the ball touches the leaning surface. Otherwise, the ball
-                # will bounce 
+                # then we assume that the ball touches the leaning surface.
+                #  Otherwise, the ball will bounce 
                 if self.count_slide == 3:
                     self.slide = True
                     print('I touch the surface')
                 elif not self.slide:
                     print('gonna bounch')
                     if velx >= 0 and vely >= 0:
-                    	return -0.25*vely, -0.25*velx, False
+                        return -0.25*vely, -0.25*velx, False
                     return 0.25*np.sign(velx)*abs(vely), 0.25*np.sign(vely)*abs(velx), False
                 if self.slide:
                     if accx >= 0 and accy >= 0:
                         if abs(accx) > abs(accy):
-                            if self.collideSquare(x, y-8):
-                            	self.slide_velx, self.slide_vely = 0, 0
-                            	return -0.1, 0, False
                             self.slide_velx += 0.002*accy/accx
                             self.slide_vely -= 0.002*accy/accx
                             return self.slide_velx, self.slide_vely, False 
                         else:
-                        	if self.collideSquare(x-8, y):
-                        		self.slide_velx, self.slide_vely = 0, 0
-                        		return 0, -0.1, False
-                        	self.slide_velx -= 0.002*accy/accx
-                        	self.slide_vely += 0.002*accy/accx
-                        	return self.slide_velx, self.slide_vely, False
+                            self.slide_velx -= 0.002*accy/accx
+                            self.slide_vely += 0.002*accy/accx
+                            return self.slide_velx, self.slide_vely, False
                     else:
-                    	self.slide_velx, self.slide_vely = 0, 0
-                    	self.count_slide = False
-                    	self.slide = False
-                    	if accx < 0 and accy < 0:
-                    		return velx, vely, False
-                    	else:
-                    		if accx >= 0:
-                    			if self.collideSquare(x, y-32):
-                    				return 0, 0, True
-                    			return velx, 0, False
-                    		else:
-                    			if self.collideSquare(x-32, y):
-                    				return 0, 0, True
-                    			return 0, vely, False
-        count += 1
+                        self.slide = False
+                        last_velx, last_vely = self.slide_velx, self.slide_vely
+                        self.slide_velx, self.slide_vely = 0, 0
+                        if accx < 0:
+                            return last_velx + accx, last_vely, False
+                        else:
+                            return last_velx, last_vely + accy, False
         return velx, vely, False
 
 
